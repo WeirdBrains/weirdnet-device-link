@@ -2,7 +2,7 @@
 
 `weirdnet-device-link/v1`: move a Weirdnet user identity to another device of the same
 person without typing its recovery words. Built in Morph ("Login over QR") and moved here
-unchanged, now on weirdnet-net 0.3.0.
+unchanged, now on weirdnet-net 0.4.0.
 
 - **Offer**: the new device (no identity yet) shows a QR code or link with its node key, a
   fresh X25519 key, its addresses (a relay circuit too, so devices on other networks
