@@ -1,0 +1,24 @@
+[package]
+name = "weirdnet-device-link"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+description = "weirdnet-device-link/v1: move a Weirdnet user identity to another device over a QR offer, SAS check and sealed transfer."
+authors = ["m3talsmith <m3talsmith@gmail.com>"]
+license = "BSD-3-Clause"
+repository = "https://github.com/WeirdBrains/weirdnet-device-link"
+documentation = "https://docs.rs/weirdnet-device-link"
+readme = "README.md"
+keywords = ["p2p", "identity", "qr", "pairing", "weirdnet"]
+categories = ["network-programming", "cryptography"]
+include = ["src/**", "README.md", "SECURITY.md", "CHANGELOG.md", "LICENSE"]
+
+[dependencies]
+base64 = "0.22"
+cbor4ii = { version = "1.2", features = ["serde1", "use_std"] }
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.11.1"
+thiserror = "2"
+weirdnet-keys = "=0.1.0"
+weirdnet-net = "=0.3.0"
+zeroize = { version = "1", features = ["derive"] }
