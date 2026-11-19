@@ -6,6 +6,8 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-19
+
 Releases as 0.3.0 (breaking: codes change).
 
 ### Added
@@ -15,6 +17,7 @@ Releases as 0.3.0 (breaking: codes change).
 - `Pairing::send_with` and `session::make_transfer_with` carry sync opt-ins in the transfer.
 - `Error::OlderCode` and `Error::NewerCode`, so apps can word version mismatches.
 - `local-relay` example for headless checks.
+- Fold in Morph's copy
 
 ### Changed
 
@@ -36,6 +39,7 @@ Releases as 0.3.0 (breaking: codes change).
 - Device linking over a QR offer or invite, a 6-digit code check and a sealed identity transfer, moved from Morph.
 - Builds on weirdnet-net 0.4.0.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/e106620...v0.1.0
