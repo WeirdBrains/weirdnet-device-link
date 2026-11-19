@@ -13,22 +13,29 @@
 //!
 //! Nothing secret is in the offer, and nothing here logs secrets.
 mod bytes;
+pub mod compact;
 pub mod invite;
 pub mod net;
 pub mod offer;
+pub mod reach;
+pub mod relays;
 pub mod session;
 pub mod wire;
 
+pub use compact::KNOWN_RELAYS;
 pub use invite::{Invite, InviteHost, answer_invite, decode_invite, encode_invite, is_invite};
 pub use net::{HostNode, Pairing};
 pub use offer::{Offer, VerifiedOffer, decode_link, encode_link, offer_addrs};
+pub use reach::{relay_groups, with_link_limits};
+pub use relays::{RelayProbe, RelayState, relay_states};
 pub use session::{Host, HostStatus, Sender};
 pub use wire::{LinkReply, LinkRequest, Transfer};
 
 use weirdnet_net::profile::{Profile, WEIRDNET};
 
-/// Protocol version in offers and transfers.
-pub const VERSION: u8 = 1;
+/// Protocol version in offers, invites and transfers. 2: compact offers and
+/// invites (CBOR arrays, binary addresses, the known relay by index).
+pub const VERSION: u8 = 2;
 /// How long an offer lives.
 pub const OFFER_TTL_MS: i64 = 120_000;
 /// Pairing attempts an offer accepts before it dies.
@@ -42,6 +49,13 @@ pub static LINK_PROFILE: Profile = Profile { protocol: "/weirdnet/link/2", threa
 pub enum Error {
     #[error("{0}")]
     Invalid(&'static str),
+    /// The code comes from an older protocol version. Apps that want their
+    /// own name in the message (`an older <App>`) match on this variant.
+    #[error("this code is from an older version; update both devices")]
+    OlderCode,
+    /// The code comes from a newer protocol version (see [`Error::OlderCode`]).
+    #[error("this code is from a newer version; update this device")]
+    NewerCode,
     #[error("this code expired; show a new one on the other device")]
     Expired,
     #[error("the other device refused: {0}")]
@@ -67,6 +81,9 @@ impl From<weirdnet_net::NetError> for Error {
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+#[cfg(test)]
+mod relay_tests;
 
 #[cfg(test)]
 mod error_tests {
