@@ -6,6 +6,8 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-19
+
 ### Changed
 
 - Breaking (wire): builds on weirdnet-net 0.8.0, whose requests carry byte fields as CBOR byte strings.
@@ -18,5 +20,6 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 - Device linking over a QR offer or invite, a 6-digit code check and a sealed identity transfer, moved from Morph.
 - Builds on weirdnet-net 0.4.0.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/e106620...v0.1.0
