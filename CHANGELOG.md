@@ -6,6 +6,8 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-20
+
 ### Changed
 
 - Depends on weirdnet-net `0.8` and weirdnet-keys `0.1` with caret ranges instead of exact pins, so apps can take net 0.8.1 and later 0.8 patches.
@@ -43,7 +45,8 @@ Releases as 0.3.0 (breaking: codes change).
 - Device linking over a QR offer or invite, a 6-digit code check and a sealed identity transfer, moved from Morph.
 - Builds on weirdnet-net 0.4.0.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/e106620...v0.1.0
