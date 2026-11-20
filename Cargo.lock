@@ -4337,9 +4337,9 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-keys"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1b44f05a7a1fd01e6d7afd61bf4c8b124a0b31292fc43aac43027bab706bb7e"
+checksum = "306cf440af26d7c8279821ba008c802a44fafc7c57b3a72343d1f3fcba0cc531"
 dependencies = [
  "age",
  "argon2",
@@ -4365,9 +4365,9 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-net"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df77cf3385bdf7eebef2770a3f3a46c660d83a6be73feac04a61a88a16f471cf"
+checksum = "24bacdd9fd2af8a0f609bfddf0c5cc0116e094d498adf7fadfce6ebd3f8c24b8"
 dependencies = [
  "base64 0.22.1",
  "blake3",
@@ -4376,7 +4376,9 @@ dependencies = [
  "futures",
  "hex",
  "hickory-resolver",
+ "jni-sys",
  "libp2p",
+ "ndk-context",
  "rustls-pki-types",
  "serde",
  "serde_json",

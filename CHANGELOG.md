@@ -6,6 +6,10 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Depends on weirdnet-net `0.8` and weirdnet-keys `0.1` with caret ranges instead of exact pins, so apps can take net 0.8.1 and later 0.8 patches.
+
 ## [0.3.0] - 2026-11-19
 
 Releases as 0.3.0 (breaking: codes change).
