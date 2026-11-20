@@ -6,6 +6,14 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Service links: `LinkRequest::Credential`, `Credential`, `make_credential`, `Pairing::send_credential`, `Host::take_any`/`HostNode::take_any` and `Received`. A server gets the user's public key, a node certificate and an opaque sync bundle, never the seed.
+
+### Changed
+
+- Link nodes accept requests up to 1 MiB (was 256 KiB), so a credential with a large roster fits.
+
 ## [0.3.1] - 2026-11-20
 
 ### Changed

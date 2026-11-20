@@ -6,18 +6,19 @@ use sha2::{Digest, Sha256};
 use weirdnet_keys::exchange::{ExchangeSecret, derive};
 use weirdnet_keys::{Key32, open, random_bytes, seal};
 use weirdnet_net::profile::WEIRDNET;
-use weirdnet_net::user::user_id;
+use weirdnet_net::user::{NodeCert, decode_public, user_id};
 use weirdnet_net::{Keypair, PeerId};
 use zeroize::Zeroizing;
 
 use crate::offer::{Offer, VerifiedOffer, cbor, encode_link};
-use crate::wire::{LinkReply, LinkRequest, Transfer};
+use crate::wire::{CREDENTIAL_VERSION, Credential, LinkReply, LinkRequest, MAX_BUNDLE, Received, Transfer};
 use crate::{Error, MAX_ATTEMPTS, OFFER_TTL_MS, Result, VERSION};
 
 const TRANSCRIPT_DOMAIN: &[u8] = b"weirdnet-device-link/v1";
 const KEY_INFO: &[u8] = b"weirdnet-device-link/v1/key";
 const SAS_INFO: &[u8] = b"weirdnet-device-link/v1/sas";
 const TRANSFER_AAD: &[u8] = b"weirdnet-device-link/v1/transfer\n";
+const CREDENTIAL_AAD: &[u8] = b"weirdnet-device-link/v1/credential\n";
 
 fn transcript(offer: &[u8], eph_existing: &[u8; 32]) -> [u8; 32] {
     let mut h = Sha256::new();
@@ -35,6 +36,10 @@ fn session_keys(shared: &[u8; 32], transcript: &[u8; 32]) -> Result<(Key32, Stri
 
 fn aad(transcript: &[u8; 32]) -> Vec<u8> {
     [TRANSFER_AAD, transcript.as_slice()].concat()
+}
+
+fn credential_aad(transcript: &[u8; 32]) -> Vec<u8> {
+    [CREDENTIAL_AAD, transcript.as_slice()].concat()
 }
 
 /// The 32-byte seed's Ed25519 user key.
@@ -77,7 +82,7 @@ struct Paired {
 struct HostInner {
     attempts: u32,
     paired: Option<Paired>,
-    received: Option<Transfer>,
+    received: Option<Received>,
     confirmed: bool,
     end: Option<HostStatus>,
 }
@@ -166,7 +171,10 @@ impl Host {
             });
         }
         let nonce = match &req {
-            LinkRequest::Hello { nonce, .. } | LinkRequest::Transfer { nonce, .. } | LinkRequest::Cancel { nonce } => nonce,
+            LinkRequest::Hello { nonce, .. }
+            | LinkRequest::Transfer { nonce, .. }
+            | LinkRequest::Credential { nonce, .. }
+            | LinkRequest::Cancel { nonce } => nonce,
         };
         if *nonce != self.offer.offer.nonce {
             return LinkReply::refused("unknown code");
@@ -217,7 +225,29 @@ impl Host {
                     s.paired = None;
                     return LinkReply::refused(reason);
                 }
-                s.received = Some(transfer);
+                s.received = Some(Received::Full(transfer));
+                LinkReply::Ok
+            }
+            LinkRequest::Credential { sealed, .. } => {
+                let Some(p) = s.paired.as_ref().filter(|p| p.peer == *from) else {
+                    return LinkReply::refused("not paired");
+                };
+                if s.received.is_some() {
+                    return LinkReply::refused("the code was already used");
+                }
+                let cred = open(&p.key, &sealed, &credential_aad(&p.transcript))
+                    .map_err(|_| Error::Invalid("could not open"))
+                    .and_then(|plain| cbor4ii::serde::from_slice::<Credential>(&plain).map_err(|_| Error::Invalid("could not read")));
+                let cred = match cred {
+                    Ok(c) => c,
+                    Err(_) => return LinkReply::refused("could not open the credential"),
+                };
+                if let Err(reason) = self.check_credential(&cred) {
+                    s.end = Some(HostStatus::Failed(reason));
+                    s.paired = None;
+                    return LinkReply::refused(reason);
+                }
+                s.received = Some(Received::Service(cred));
                 LinkReply::Ok
             }
             LinkRequest::Cancel { .. } => {
@@ -249,6 +279,24 @@ impl Host {
         Ok(())
     }
 
+    fn check_credential(&self, c: &Credential) -> std::result::Result<(), &'static str> {
+        const BAD: &str = "the credential did not check out";
+        if c.v != CREDENTIAL_VERSION {
+            return Err("the other device runs a newer version");
+        }
+        if c.bundle.len() > MAX_BUNDLE {
+            return Err(BAD);
+        }
+        let key = decode_public(&c.user_key).map_err(|_| BAD)?;
+        if user_id(&key) != c.user_id || c.node_cert.peer_id != self.offer.peer().to_string() || c.node_cert.user_id != c.user_id {
+            return Err(BAD);
+        }
+        if !WEIRDNET.verify_cert(&key, &c.node_cert) || !c.node_cert.active() {
+            return Err(BAD);
+        }
+        Ok(())
+    }
+
     /// The user tapped "Matches" on this device.
     pub fn confirm(&self) {
         let mut s = self.lock();
@@ -260,6 +308,18 @@ impl Host {
     /// The identity, once it arrived and the user confirmed the code here. Spends
     /// the offer; later calls fail.
     pub fn take(&self) -> Result<Transfer> {
+        if matches!(self.lock().received, Some(Received::Service(_))) {
+            return Err(Error::Invalid("a service link arrived; take it with take_any"));
+        }
+        match self.take_any()? {
+            Received::Full(t) => Ok(t),
+            Received::Service(_) => Err(Error::Invalid("a service link arrived; take it with take_any")),
+        }
+    }
+
+    /// What arrived (a full link's [`Transfer`] or a service link's [`Credential`]),
+    /// once the user confirmed the code here. Spends the offer; later calls fail.
+    pub fn take_any(&self) -> Result<Received> {
         let mut s = self.lock();
         if !s.confirmed {
             return Err(Error::Invalid("confirm the code first"));
@@ -331,9 +391,45 @@ impl Sender {
         Ok(LinkRequest::Transfer { nonce: self.offer.offer.nonce.clone(), sealed })
     }
 
+    /// The sealed credential request of a service link; only after the user confirmed the SAS.
+    pub fn credential(&self, c: &Credential) -> Result<LinkRequest> {
+        let plain = Zeroizing::new(cbor(c)?);
+        let sealed = seal(&self.key, &plain, &credential_aad(&self.transcript))?;
+        Ok(LinkRequest::Credential { nonce: self.offer.offer.nonce.clone(), sealed })
+    }
+
     pub fn cancel(&self) -> LinkRequest {
         LinkRequest::Cancel { nonce: self.offer.offer.nonce.clone() }
     }
+}
+
+/// A service link's credential for the new device in `offer`: the user's public key, a
+/// node certificate for it signed by `user` (the user keypair, which stays here), the
+/// sync types and `bundle` (for example `weirdnet_sync::LinkBundle` bytes). No seed.
+pub fn make_credential(
+    user: &Keypair,
+    profile_name: &str,
+    settings: &str,
+    sync: &[String],
+    bundle: &[u8],
+    offer: &VerifiedOffer,
+    now_ms: i64,
+) -> Result<Credential> {
+    if bundle.len() > MAX_BUNDLE {
+        return Err(Error::Invalid("the sync bundle is too large"));
+    }
+    let uid = user_id(&user.public());
+    let node_cert: NodeCert = WEIRDNET.certify(user, &uid, &offer.peer().to_string(), &offer.offer.hint, now_ms)?;
+    Ok(Credential {
+        v: CREDENTIAL_VERSION,
+        user_key: user.public().encode_protobuf(),
+        user_id: uid,
+        profile_name: profile_name.to_string(),
+        settings: settings.to_string(),
+        node_cert,
+        sync: sync.to_vec(),
+        bundle: bundle.to_vec(),
+    })
 }
 
 /// A transfer for the new device in `offer`: the seed, and a node certificate
@@ -403,6 +499,43 @@ mod tests {
         let (again, hello) = scan(&host, 8);
         assert!(matches!(host.handle(&phone, hello, 9), LinkReply::Refused { .. }));
         assert!(matches!(host.handle(&phone, again.transfer(&t).unwrap(), 9), LinkReply::Refused { .. }));
+    }
+
+    #[test]
+    fn a_service_credential_moves_without_a_seed() {
+        let (host, node) = new_host(0);
+        let phone = Keypair::generate_ed25519().public().to_peer_id();
+        let (sender, hello) = scan(&host, 1);
+        assert_eq!(host.handle(&phone, hello, 2), LinkReply::Ok);
+        let user = Keypair::generate_ed25519();
+        let c = make_credential(&user, "Work", "{}", &["ymir.pool".into()], b"bundle bytes", sender.offer(), 3).unwrap();
+        assert!(!format!("{c:?}").contains("bundle"), "Debug hides the bundle");
+        // Sealed for a credential: it does not open as a transfer, nor the other way round.
+        let LinkRequest::Credential { nonce, sealed } = sender.credential(&c).unwrap() else { panic!() };
+        assert!(matches!(host.handle(&phone, LinkRequest::Transfer { nonce: nonce.clone(), sealed: sealed.clone() }, 4), LinkReply::Refused { .. }));
+        assert_eq!(host.handle(&phone, LinkRequest::Credential { nonce, sealed }, 4), LinkReply::Ok);
+        host.confirm();
+        assert!(host.take().is_err(), "take() is for full links only");
+        let Received::Service(got) = host.take_any().unwrap() else { panic!("expected a service link") };
+        assert_eq!(got.bundle, b"bundle bytes");
+        assert_eq!(got.user_key, user.public().encode_protobuf());
+        assert_eq!(got.node_cert.peer_id, node.public().to_peer_id().to_string());
+        assert!(WEIRDNET.verify_cert(&user.public(), &got.node_cert));
+        assert_eq!(host.status(5), HostStatus::Done);
+    }
+
+    #[test]
+    fn a_credential_for_another_node_or_user_is_refused() {
+        let (host, _) = new_host(0);
+        let phone = Keypair::generate_ed25519().public().to_peer_id();
+        let (sender, hello) = scan(&host, 1);
+        host.handle(&phone, hello, 1);
+        let user = Keypair::generate_ed25519();
+        let mut c = make_credential(&user, "Work", "{}", &[], b"", sender.offer(), 1).unwrap();
+        c.user_key = Keypair::generate_ed25519().public().encode_protobuf();
+        assert!(matches!(host.handle(&phone, sender.credential(&c).unwrap(), 2), LinkReply::Refused { .. }));
+        assert!(matches!(host.status(3), HostStatus::Failed(_)));
+        assert!(make_credential(&user, "Work", "{}", &[], &vec![0; MAX_BUNDLE + 1], sender.offer(), 1).is_err());
     }
 
     #[test]

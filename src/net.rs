@@ -10,7 +10,7 @@ use weirdnet_net::{Keypair, PeerId, now_ms};
 use crate::offer::has_circuit;
 use crate::reach::{self, LinkNode};
 use crate::session::{Host, HostStatus, Sender};
-use crate::wire::{LinkReply, LinkRequest, Transfer};
+use crate::wire::{LinkReply, LinkRequest, Received, Transfer};
 use crate::{Error, LINK_PROFILE, Result, decode_link, offer_addrs};
 
 /// How long a listening device waits for its listeners before giving up.
@@ -90,6 +90,11 @@ impl HostNode {
 
     pub fn take(&self) -> Result<Transfer> {
         self.host.take()
+    }
+
+    /// A full or a service link, whichever arrived (see [`Host::take_any`]).
+    pub fn take_any(&self) -> Result<Received> {
+        self.host.take_any()
     }
 
     pub fn cancel(&self) {
@@ -185,6 +190,29 @@ impl Pairing {
         Ok(cert)
     }
 
+    /// The user confirmed the codes match: link the new device as a **service** device,
+    /// once. Sends the user's public key, a certificate made here with `user` (which never
+    /// leaves this device) and `bundle` (sync material, such as
+    /// `weirdnet_sync::Identity::service_bundle`), never the seed. Returns the new device's
+    /// cert, to approve in the roster.
+    pub fn send_credential(
+        &mut self,
+        user: &Keypair,
+        profile_name: &str,
+        settings: &str,
+        sync: &[String],
+        bundle: &[u8],
+    ) -> Result<weirdnet_net::user::NodeCert> {
+        if self.sent {
+            return Err(Error::Invalid("already sent"));
+        }
+        let c = crate::session::make_credential(user, profile_name, settings, sync, bundle, self.sender.offer(), now_ms())?;
+        let cert = c.node_cert.clone();
+        self.ask(self.sender.credential(&c)?)?;
+        self.sent = true;
+        Ok(cert)
+    }
+
     /// The codes differ (or the user gave up): tell the new device.
     pub fn cancel(&self) -> Result<()> {
         self.ask(self.sender.cancel())
@@ -229,6 +257,22 @@ mod tests {
         assert_eq!(t.seed, seed.0.to_vec());
         assert_eq!(t.node_cert.peer_id, new_device.peer_id().to_string());
         assert_eq!(new_device.status(), HostStatus::Done);
+    }
+
+    #[test]
+    fn a_service_link_moves_over_the_network_without_a_seed() {
+        let new_device = HostNode::start(SCHEME, Keypair::generate_ed25519(), memory(), "model node").unwrap();
+        let mut phone = Pairing::start(SCHEME, new_device.link(), dial_only()).unwrap();
+        let user = Keypair::generate_ed25519();
+        new_device.confirm();
+        // A large roster with epoch keys still fits one request.
+        let big = vec![7u8; crate::MAX_BUNDLE];
+        let cert = phone.send_credential(&user, "Work", "{}", &[], &big).unwrap();
+        assert!(phone.send_credential(&user, "Work", "{}", &[], &big).is_err(), "single send");
+        let Received::Service(c) = new_device.take_any().unwrap() else { panic!("expected a service link") };
+        assert_eq!(c.node_cert, cert);
+        assert_eq!(c.node_cert.peer_id, new_device.peer_id().to_string());
+        assert_eq!(c.bundle, big);
     }
 
     /// Over the internet through the WeirdBrains public relay, with no direct

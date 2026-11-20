@@ -28,7 +28,7 @@ use crate::Result;
 /// sealed transfer (a 32-byte seed, a profile name, a node certificate and a
 /// little settings JSON) or a cancel: a few KiB. Bulk data (identity sync)
 /// belongs on a stream, not here. weirdnet-net's default is 8 MiB.
-pub const REQUEST_MAX: u64 = 256 * 1024;
+pub const REQUEST_MAX: u64 = 1024 * 1024;
 /// The largest response: always `Ok` or a short refusal.
 pub const RESPONSE_MAX: u64 = 16 * 1024;
 /// How long a request waits for its answer. The other side answers at once

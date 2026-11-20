@@ -20,11 +20,19 @@ on weirdnet-net 0.8.0.
   send the seed, the profile name, the sync types the user opted in to and a node
   certificate for the new device, sealed with that key (`Pairing::send_with`,
   `session::make_transfer_with`).
+- **Service link** (0.4): for a server that must not hold the seed (a model or inference
+  node), the existing device sends a `Credential` instead: the user's **public** key, a node
+  certificate it signs with the user key (which stays on the existing device), the sync types
+  and an opaque sync bundle (`weirdnet_sync::Identity::service_bundle`: the device's grant,
+  the roster and, if it syncs types, epoch keys), sealed the same way
+  (`Pairing::send_credential`, `session::make_credential`). The new device takes it with
+  `take_any()` (`Received::Service`) and adopts it with `weirdnet_sync::Identity::adopt_service`.
+  `take()` keeps returning only a full `Transfer`. A 0.3 device refuses a credential.
 - An offer is single use and dies after three pairing attempts, a cancel, a transfer or its
   expiry.
 
 - **Relays**: link nodes start with the relays in their `NodeConfig` and the link limits
-  (`with_link_limits`: 256 KiB requests, 16 KiB responses, 30 s timeout, applied only where
+  (`with_link_limits`: 1 MiB requests, 16 KiB responses, 30 s timeout, applied only where
   the config leaves weirdnet-net's defaults). `RelayProbe` is a short-lived node that
   reserves on the configured relays and measures each one's round trip with a names
   lookup; `relay_states` turns node statuses into per-relay connected, reserved and

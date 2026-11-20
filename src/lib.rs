@@ -11,6 +11,9 @@
 //! device), sealed with that key. The offer is single use and dies after three
 //! pairing attempts, a cancel, a transfer or its expiry.
 //!
+//! A server that must not hold the seed gets a [`Credential`] instead (a *service
+//! link*): the user's public key, a node certificate and an opaque sync bundle.
+//!
 //! Nothing secret is in the offer, and nothing here logs secrets.
 mod bytes;
 pub mod compact;
@@ -28,8 +31,9 @@ pub use net::{HostNode, Pairing};
 pub use offer::{Offer, VerifiedOffer, decode_link, encode_link, offer_addrs};
 pub use reach::{relay_groups, with_link_limits};
 pub use relays::{RelayProbe, RelayState, relay_states};
+pub use session::make_credential;
 pub use session::{Host, HostStatus, Sender};
-pub use wire::{LinkReply, LinkRequest, Transfer};
+pub use wire::{CREDENTIAL_VERSION, Credential, LinkReply, LinkRequest, MAX_BUNDLE, Received, Transfer};
 
 use weirdnet_net::profile::{Profile, WEIRDNET};
 
