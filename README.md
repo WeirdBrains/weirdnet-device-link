@@ -10,7 +10,7 @@ on weirdnet-net 0.8.0.
   circuit for each of up to two relays, so devices on other networks connect) and a
   120-second expiry, signed by its node key. Nothing secret is in it. Codes are compact
   CBOR arrays (protocol version 2): addresses are binary multiaddrs, and a circuit through
-  one of the `KNOWN_RELAYS` (the WeirdBrains public relay) is a single byte, so the QR
+  one of the `KNOWN_RELAYS` (the [WeirdBrains](https://weirdbrains.com) public relay) is a single byte, so the QR
   stays small.
 - **Invite**: or the existing device shows the QR, and the new device scans it; the same
   offer, code check and transfer follow.
