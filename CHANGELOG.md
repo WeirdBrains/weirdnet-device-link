@@ -6,6 +6,8 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-20
+
 ### Added
 
 - Service links: `LinkRequest::Credential`, `Credential`, `make_credential`, `Pairing::send_credential`, `Host::take_any`/`HostNode::take_any` and `Received`. A server gets the user's public key, a node certificate and an opaque sync bundle, never the seed.
@@ -53,7 +55,8 @@ Releases as 0.3.0 (breaking: codes change).
 - Device linking over a QR offer or invite, a 6-digit code check and a sealed identity transfer, moved from Morph.
 - Builds on weirdnet-net 0.4.0.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.1.0...v0.2.0
