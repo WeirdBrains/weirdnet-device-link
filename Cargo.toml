@@ -1,6 +1,6 @@
 [package]
 name = "weirdnet-device-link"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2024"
 rust-version = "1.99"
 description = "weirdnet-device-link/v1: move a Weirdnet user identity to another device over a QR offer, SAS check and sealed transfer."

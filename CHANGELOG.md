@@ -6,6 +6,12 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-21
+
+### Changed
+
+- Package metadata and docs follow the WeirdBrains public-content rules (Weird Brains LLC as the copyright holder, m3talsmith as the author, no machine details). No code or API changes.
+
 ## [0.3.1] - 2026-11-20
 
 ### Changed
@@ -46,6 +52,7 @@ Releases as 0.3.0 (breaking: codes change).
 - Builds on weirdnet-net 0.4.0.
 
 [Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.1...HEAD
+[0.3.2]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.1.0...v0.2.0
