@@ -45,6 +45,38 @@ pub fn with_link_limits(cfg: NodeConfig) -> NodeConfig {
     }
 }
 
+/// [`crate::KNOWN_RELAYS`] as multiaddrs: the relays a link node uses when
+/// the app does not configure its own.
+pub fn known_relays() -> Vec<Multiaddr> {
+    crate::KNOWN_RELAYS.iter().filter_map(|a| a.parse().ok()).collect()
+}
+
+/// A comma-separated relay list (`/…/p2p/<relay>` multiaddrs) as multiaddrs,
+/// in order. Entries that do not parse or name no relay peer id are dropped;
+/// an empty list means no relays.
+pub fn parse_relays(list: &str) -> Vec<Multiaddr> {
+    list.split(',').filter_map(|a| a.trim().parse::<Multiaddr>().ok()).filter(|a| addr_peer(a).is_some()).collect()
+}
+
+/// The relays from the environment variable `var` ([`parse_relays`]; set
+/// but empty means no relays), or [`known_relays`] when it is not set. Each
+/// app picks its own variable name.
+pub fn relays_from_env(var: &str) -> Vec<Multiaddr> {
+    match std::env::var(var) {
+        Ok(list) => parse_relays(&list),
+        Err(_) => known_relays(),
+    }
+}
+
+/// A link node's configuration: TCP and QUIC on every interface on a port
+/// the system picks, `relays` (a circuit is reserved on each, so devices on
+/// other networks connect), `label` for the node, and the link limits
+/// ([`with_link_limits`]). Adjust the rest (discovery, extra listen
+/// addresses) on the returned value.
+pub fn link_node_config(label: &str, relays: Vec<Multiaddr>) -> NodeConfig {
+    with_link_limits(NodeConfig { listen: NodeConfig::default_listen(0), relays, label: label.into(), ..Default::default() })
+}
+
 /// Relay addresses grouped by relay, both in configuration order. Addresses
 /// without a `/p2p/` peer id are not relay addresses and are dropped, as are
 /// repeats.
@@ -108,6 +140,39 @@ mod tests {
         assert_eq!(g[0].0.to_string(), RELAY);
         assert_eq!(g[0].1, vec![addrs[0].clone(), addrs[2].clone(), addrs[3].clone()]);
         assert_eq!(g[1].1, vec![addrs[1].clone()]);
+    }
+
+    #[test]
+    fn known_relays_all_parse_and_name_a_relay() {
+        let r = known_relays();
+        assert_eq!(r.len(), crate::KNOWN_RELAYS.len());
+        assert!(r.iter().all(|a| addr_peer(a).is_some()));
+        assert_eq!(relay_groups(&r).len(), 1);
+    }
+
+    #[test]
+    fn a_relay_list_keeps_relay_addresses_in_order() {
+        let list = format!(" /dns4/a.example/tcp/1/p2p/{RELAY} ,nonsense,/ip4/192.0.2.1/tcp/1, /dns4/b.example/udp/2/quic-v1/p2p/{RELAY}");
+        assert_eq!(
+            parse_relays(&list),
+            vec![m(&format!("/dns4/a.example/tcp/1/p2p/{RELAY}")), m(&format!("/dns4/b.example/udp/2/quic-v1/p2p/{RELAY}"))]
+        );
+        assert!(parse_relays("").is_empty());
+        assert!(parse_relays(" , ").is_empty());
+    }
+
+    #[test]
+    fn relays_from_an_unset_variable_are_the_known_ones() {
+        assert_eq!(relays_from_env("WEIRDNET_DEVICE_LINK_TEST_UNSET_RELAYS"), known_relays());
+    }
+
+    #[test]
+    fn a_link_node_config_listens_everywhere_with_the_link_limits() {
+        let c = link_node_config("app-link", known_relays());
+        assert_eq!(c.listen, NodeConfig::default_listen(0));
+        assert_eq!(c.relays, known_relays());
+        assert_eq!(c.label, "app-link");
+        assert_eq!((c.request_max, c.response_max, c.request_timeout), (REQUEST_MAX, RESPONSE_MAX, REQUEST_TIMEOUT));
     }
 
     #[test]

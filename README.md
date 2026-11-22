@@ -31,6 +31,16 @@ on weirdnet-net 0.8.0.
   round-trip state for a settings page. `HostNode`, `Pairing` and `InviteHost` expose
   `net_status()`.
 
+- **Several apps' codes**: `offer_scheme` tells which of several schemes a new device's
+  code is on (the `<scheme>link/` prefix in any case) and normalizes it for `decode_link`,
+  so an app can pair with another app's codes (the prefix is not signed). `is_offer` is the
+  counterpart of `is_invite`.
+- **Link node setup**: `link_node_config(label, relays)` listens on TCP and QUIC on every
+  interface with the link limits; `known_relays()` is `KNOWN_RELAYS` as multiaddrs;
+  `parse_relays` reads a comma-separated relay list and `relays_from_env(VAR)` reads one
+  from an app's own environment variable (set but empty means no relays, unset means
+  `known_relays()`).
+
 Modules: `offer` (offers and links), `compact` (`KNOWN_RELAYS`, `pack_addr`/`unpack_addr`),
 `invite`, `session` (both sides without the network), `net` (`HostNode`, `Pairing` over
 weirdnet-net), `reach` (relay groups and link limits), `relays` (`RelayProbe`,
