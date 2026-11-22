@@ -2,6 +2,15 @@
 
 Running notes for [weirdnet-device-link](https://github.com/WeirdBrains/weirdnet-device-link), newest first.
 
+## 2026-11-22: v0.3.3, Morph's generic device-link additions
+
+- What changed: v0.3.3 publishes the additions moved from Morph on the [maint/0.3](https://github.com/WeirdBrains/weirdnet-device-link/tree/maint/0.3) line: `offer_scheme`, `is_offer`, `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config`. Additive; dependency ranges unchanged. On [crates.io](https://crates.io/crates/weirdnet-device-link/0.3.3) and [docs.rs](https://docs.rs/weirdnet-device-link/0.3.3).
+- Commits: [`e2d7f59`](https://github.com/WeirdBrains/weirdnet-device-link/commit/e2d7f59d2811) (`release: v0.3.3`), tagged [v0.3.3](https://github.com/WeirdBrains/weirdnet-device-link/releases/tag/v0.3.3).
+- Checks: the release script's cargo fmt, clippy -D warnings, test and package; CI on the branch before the release.
+- Not tested: Morph built against 0.3.3.
+- Left: the same additions are on main, unreleased (a 0.4.2 needs Michael's OK).
+- Next: Morph moves to 0.3.3 and drops its copies.
+
 ## 2026-11-22: maint/0.3, Morph's generic device-link additions (unreleased)
 
 - What changed: the generic parts of Morph's device-link code moved here on the [maint/0.3](https://github.com/WeirdBrains/weirdnet-device-link/tree/maint/0.3) line, on top of 0.3.2: `offer_scheme` and `is_offer` (pair with several apps' codes) and `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config` (link node relays and configuration). Additive only; dependency ranges unchanged.
