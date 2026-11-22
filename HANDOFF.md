@@ -2,6 +2,15 @@
 
 Running notes for [weirdnet-device-link](https://github.com/WeirdBrains/weirdnet-device-link), newest first.
 
+## 2026-11-22: v0.4.2
+
+- What changed: released the Morph additions that were on main (`offer_scheme`, `is_offer`, `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config`) as [v0.4.2](https://github.com/WeirdBrains/weirdnet-device-link/releases/tag/v0.4.2), published at [crates.io/crates/weirdnet-device-link/0.4.2](https://crates.io/crates/weirdnet-device-link/0.4.2). Michael approved this release.
+- Commits: [`01da492`](https://github.com/WeirdBrains/weirdnet-device-link/commit/01da4927b92bf4ac3072790863b9184e36cda88e) (the additions) and [`800ba6d`](https://github.com/WeirdBrains/weirdnet-device-link/commit/800ba6d3de0e7cfcc8d71863b675f1d91bb94913) (`release: v0.4.2`), tagged [v0.4.2](https://github.com/WeirdBrains/weirdnet-device-link/releases/tag/v0.4.2).
+- Checks: `cargo fmt --check`, `cargo clippy --locked --all-targets -- -D warnings`, `cargo test --locked` (41 passed, 2 ignored) and `cargo package --locked` before the tag; the release script published the crate.
+- Not tested: apps built against 0.4.2 (Morph's pin follows in that repo).
+- Left: `Cargo.lock` still resolves `weirdnet-net` 0.8.1 and `weirdnet-keys` 0.1.1, which are yanked; the manifest caret ranges allow later 0.8 and 0.1 patches.
+- Next: Morph pins `weirdnet-device-link` 0.4.2.
+
 ## 2026-11-22: main, Morph's generic device-link additions (unreleased)
 
 - What changed: the same additions as on [maint/0.3](https://github.com/WeirdBrains/weirdnet-device-link/tree/maint/0.3), ported to main on top of 0.4.1: `offer_scheme`, `is_offer`, `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config`. Additive only; dependency ranges unchanged; main stays publishable.
