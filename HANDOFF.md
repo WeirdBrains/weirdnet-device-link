@@ -5,7 +5,7 @@ Running notes for [weirdnet-device-link](https://github.com/WeirdBrains/weirdnet
 ## 2026-11-22: maint/0.3, Morph's generic device-link additions (unreleased)
 
 - What changed: the generic parts of Morph's device-link code moved here on the [maint/0.3](https://github.com/WeirdBrains/weirdnet-device-link/tree/maint/0.3) line, on top of 0.3.2: `offer_scheme` and `is_offer` (pair with several apps' codes) and `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config` (link node relays and configuration). Additive only; dependency ranges unchanged.
-- Commits: [`6bea8ee`](https://github.com/WeirdBrains/weirdnet-device-link/commit/6bea8ee2ad9ad8f6f4a161cfa9a156c9e0dade19).
+- Commits: [`6bea8ee`](https://github.com/WeirdBrains/weirdnet-device-link/commit/6bea8ee2ad9ad8f6f4a161cfa9a156c9e0dade19), and [`bd52a86`](https://github.com/WeirdBrains/weirdnet-device-link/commit/bd52a8640b97d1ce8627d856a95cba2dc8e1b416) (the CHANGELOG's Unreleased link now compares from v0.3.2).
 - Checks: cargo fmt --check, clippy --all-targets -D warnings, test (38 passed, 2 ignored) and doc with -D warnings.
 - Not tested: Morph built against this branch (Morph pins 0.3.1 exactly).
 - Left: the 0.3.3 release (needs Michael's OK on the exact question); the same additions as an unreleased commit on main.
