@@ -6,6 +6,8 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-22
+
 ### Added
 
 - `offer_scheme` and `is_offer`: detect and normalize a new device's code across several apps' schemes, for apps that pair with more than one app's codes.
@@ -66,7 +68,8 @@ Releases as 0.3.0 (breaking: codes change).
 - Device linking over a QR offer or invite, a 6-digit code check and a sealed identity transfer, moved from Morph.
 - Builds on weirdnet-net 0.4.0.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/WeirdBrains/weirdnet-device-link/compare/v0.3.0...v0.3.1
