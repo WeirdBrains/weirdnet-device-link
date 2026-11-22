@@ -6,6 +6,11 @@ All notable changes to weirdnet-device-link are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `offer_scheme` and `is_offer`: detect and normalize a new device's code across several apps' schemes, for apps that pair with more than one app's codes.
+- `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config`: the relay list and node configuration a link node starts with, moved from Morph.
+
 ## [0.4.1] - 2026-11-21
 
 ### Changed

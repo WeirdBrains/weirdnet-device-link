@@ -135,6 +135,29 @@ pub fn decode_link(scheme: &str, text: &str) -> Result<VerifiedOffer> {
     Ok(VerifiedOffer { offer, bytes: signed, node })
 }
 
+/// Which of `schemes` a new device's code is on: the index of the first whose
+/// `<scheme>link/` prefix starts `text` (scheme and `link/` in any case, after
+/// trimming), and the code with that prefix in lowercase, which is how
+/// [`decode_link`] reads it. Only the prefix is looked at; `decode_link` checks
+/// the rest. The prefix is not signed, so an app that pairs with more than one
+/// app's codes (the same crate, a different scheme) can detect and normalize
+/// them here and pass the matching scheme on.
+pub fn offer_scheme(schemes: &[&str], text: &str) -> Option<(usize, String)> {
+    let text = text.trim();
+    schemes.iter().enumerate().find_map(|(i, scheme)| {
+        let prefix = format!("{scheme}link/").to_ascii_lowercase();
+        let head = text.get(..prefix.len())?;
+        head.eq_ignore_ascii_case(&prefix).then(|| (i, format!("{prefix}{}", &text[prefix.len()..])))
+    })
+}
+
+/// Whether `text` is a new device's code (an offer, not an invite) for
+/// `scheme`, by its `<scheme>link/` prefix in any case. The counterpart of
+/// [`crate::is_invite`]; [`decode_link`] checks the rest.
+pub fn is_offer(scheme: &str, text: &str) -> bool {
+    offer_scheme(&[scheme], text).is_some()
+}
+
 /// A code from another protocol version.
 pub(crate) fn version_error(v: u8) -> Error {
     if v < VERSION { Error::OlderCode } else { Error::NewerCode }
@@ -269,6 +292,37 @@ pub fn has_circuit(addrs: &[String]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn offer_scheme_picks_the_scheme_and_lowercases_the_prefix() {
+        let schemes = ["weirdnet-morph://", "weirdnet-ymir://"];
+        let body = "AbC_-9";
+        assert_eq!(offer_scheme(&schemes, &format!("  WeirdNet-Ymir://LINK/{body}\n")), Some((1, format!("weirdnet-ymir://link/{body}"))));
+        assert_eq!(offer_scheme(&schemes, &format!("weirdnet-morph://link/{body}")), Some((0, format!("weirdnet-morph://link/{body}"))));
+        assert_eq!(offer_scheme(&schemes, &format!("weirdnet-morph://invite/{body}")), None);
+        assert_eq!(offer_scheme(&schemes, "weirdnet-mor"), None);
+        assert_eq!(offer_scheme(&schemes, "é"), None);
+        assert_eq!(offer_scheme(&[], "weirdnet-morph://link/x"), None);
+    }
+
+    #[test]
+    fn a_normalized_code_on_another_scheme_decodes() {
+        let key = Keypair::generate_ed25519();
+        let (link, _) = encode_link("weirdnet-ymir://", &offer(&key), &key).unwrap();
+        let shouted = link.replacen("weirdnet-ymir://link/", "WEIRDNET-YMIR://Link/", 1);
+        assert!(decode_link("weirdnet-ymir://", &shouted).is_err(), "decode_link reads the prefix as is");
+        let (i, code) = offer_scheme(&["weirdnet-morph://", "weirdnet-ymir://"], &shouted).unwrap();
+        assert_eq!((i, code.as_str()), (1, link.as_str()));
+        assert!(decode_link("weirdnet-ymir://", &code).is_ok());
+    }
+
+    #[test]
+    fn is_offer_tells_offers_from_invites() {
+        assert!(is_offer("weirdnet-morph://", " Weirdnet-Morph://link/abc "));
+        assert!(!is_offer("weirdnet-morph://", "weirdnet-morph://invite/abc"));
+        assert!(!is_offer("weirdnet-morph://", "weirdnet-ymir://link/abc"));
+        assert!(!crate::is_invite("weirdnet-morph://", "weirdnet-morph://link/abc"));
+    }
 
     fn offer(key: &Keypair) -> Offer {
         Offer {
