@@ -4321,7 +4321,7 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-device-link"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "base64 0.22.1",
  "cbor4ii",
